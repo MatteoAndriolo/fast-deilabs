@@ -3,12 +3,7 @@
 logged=0
 
 function check_DEI {
-	res=$(nmcli -t dev wifi | grep ":DEI:") 
-	if [ -z "$res" ]; then
-		echo 0
-	else
-		echo 1
-	fi
+	echo 0
 }
 
 function handle_sigint {
@@ -26,7 +21,7 @@ echo "Started Fast DEILabs daemon service.\nLooking for DEI wifi"
 
 while true; do
 	if [ $logged -eq 0 ]; then
-		if [ $(check_DEI) -eq 1 ]; then
+		if [ true ]; then
 			result=$(fast_deilabs in)
 			error=$?
 
@@ -51,5 +46,5 @@ while true; do
 			logged=0
 		fi
 	fi
-	sleep 2
+	sleep 300
 done

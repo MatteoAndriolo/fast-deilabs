@@ -16,10 +16,10 @@ if ! [[ -d "$config_dir" ]]; then
 fi
 
 function usage {
-	echo 
+	echo
 	echo "Automatically register to deilabs.dei.unipd.it"
 	echo "  by Nicola Lissandrini <nicola.lissandrini@dei.unipd.it>"
-	echo 
+	echo
 	echo
 	echo "Usage: $0 [configuration] [in|out]"
 	echo
@@ -29,7 +29,7 @@ function usage {
 	echo "  	-p PSW		Set user psw. WARNING: saved unencrypted. If you don't save the psw you will be prompted each time"
 	echo "  	-r 		Reset password"
 	echo "  	-h 		Show this help"
-	echo 
+	echo
 	echo "  Register entry/exit:"
 	echo "  	in  		Register entry with current configuration"
 	echo "  	out 		Register exit with current configuration"
@@ -46,10 +46,10 @@ function parse_config {
 }
 
 function save_config {
-	echo "# Mail to laboratori@dei configuration file." > $configfile
-	echo "name=$1" >> $configfile
-	echo "lab=$2" >> $configfile
-	echo "psw=$3" >> $configfile
+	echo "# Mail to laboratori@dei configuration file." >$configfile
+	echo "name=$1" >>$configfile
+	echo "lab=$2" >>$configfile
+	echo "psw=$3" >>$configfile
 }
 
 function get_username {
@@ -57,19 +57,19 @@ function get_username {
 }
 
 function get_labs {
-	egrep -A 2 "<option value=\"[0-9]+\"" < /dev/stdin |\
-	 paste - - - |\
-	 sed -n 's/[ ]//p' |\
-	 sed -n 's/.*<option value="\([0-9]*\)".*>\s*\(.*\)*\s*<\/option>.*/\1 "\2/p' |\
-	 sed -n 's/[ \t]*$/"/p'
+	egrep -A 2 "<option value=\"[0-9]+\"" </dev/stdin |
+		paste - - - |
+		sed -n 's/[ ]//p' |
+		sed -n 's/.*<option value="\([0-9]*\)".*>\s*\(.*\)*\s*<\/option>.*/\1 "\2/p' |
+		sed -n 's/[ \t]*$/"/p'
 }
 
 function get_token {
 	tokenpage=$(wget --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0" \
-					 --save-cookies ${cookies_file} \
-		 			 --keep-session-cookies \
-		 			 --auth-no-challenge --debug \
-		 			 -O - "$login_page" 2> /dev/null)
+		--save-cookies ${cookies_file} \
+		--keep-session-cookies \
+		--auth-no-challenge --debug \
+		-O - "$login_page" 2>/dev/null)
 
 	token=$(echo "$tokenpage" | grep _token | sed -n 's/.*value="\(.*\)".*/\1/p')
 	echo $token
@@ -80,13 +80,13 @@ function do_login {
 	email=$2
 	password=$3
 
-	login_result=$(wget  --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0" \
-				    --load-cookies ${cookies_file} \
-						--keep-session-cookies \
-						--save-cookies ${cookies_file} \
-		 			  --auth-no-challenge \
-						--post-data "_token=${token}&email=${email}&password=${password}&remember=0" \
-						-O - "$login_page" -S 2> /dev/null)
+	login_result=$(wget --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0" \
+		--load-cookies ${cookies_file} \
+		--keep-session-cookies \
+		--save-cookies ${cookies_file} \
+		--auth-no-challenge \
+		--post-data "_token=${token}&email=${email}&password=${password}&remember=0" \
+		-O - "$login_page" -S 2>/dev/null)
 
 	if ! [[ -z $(echo "$login_result" | grep "Login") ]]; then
 		echo "Failed login"
@@ -98,9 +98,9 @@ function find_lab {
 	token=$1
 	lab=$2
 	lab_list_result=$(wget --load-cookies ${cookies_file} \
-						 --keep-session-cookies \
-						 --save-cookies ${cookies_file} \
-						 -O - "$lab_in_out_page" 2> /dev/null)
+		--keep-session-cookies \
+		--save-cookies ${cookies_file} \
+		-O - "$lab_in_out_page" 2>/dev/null)
 
 	# Check not already entered
 	if ! [[ -z $(echo "$lab_list_result" | grep "Exit from") ]]; then
@@ -112,14 +112,14 @@ function find_lab {
 	lab_ids=$(echo "$lab_list_result" | get_labs)
 
 	# Get desired lab
-	found_lab=$(echo "$lab_ids" | grep "$lab") 
+	found_lab=$(echo "$lab_ids" | grep "$lab")
 
 	# Check if found exactly one
 	if [[ -z "$found_lab" ]]; then
 		echo "No laboratory matches the supplied label. Aborting"
 		exit -2
 	fi
-	if [[ $(echo "$found_lab" | wc -l)  -gt 1 ]]; then
+	if [[ $(echo "$found_lab" | wc -l) -gt 1 ]]; then
 		echo "Multiple laboratories match the supplied label. Aborting"
 		exit -3
 	fi
@@ -132,10 +132,10 @@ function enter_lab {
 	token=$1
 	found_lab_id=$2
 	enter_lab_result=$(wget --load-cookies ${cookies_file} \
-							--keep-session-cookies \
-							--save-cookies ${cookies_file} \
-							--post-data "_token=${token}&laboratory_id=${found_lab_id}" \
-							-O - "$lab_in_out_page" 2> /dev/null)
+		--keep-session-cookies \
+		--save-cookies ${cookies_file} \
+		--post-data "_token=${token}&laboratory_id=${found_lab_id}" \
+		-O - "$lab_in_out_page" 2>/dev/null)
 
 	if ! [[ -z $(echo "$enter_lab_result" | grep "OK") ]]; then
 		echo "Successfully entered lab $lab"
@@ -144,7 +144,7 @@ function enter_lab {
 		exit -6
 	fi
 	# Store lab exit URL
-	echo "$enter_lab_result" | grep -B 1 "edit_laboratory_in_outs_form" | paste - - | sed -n 's/.*action="\([^"]*\)".*/\1/p' > ${exit_file}
+	echo "$enter_lab_result" | grep -B 1 "edit_laboratory_in_outs_form" | paste - - | sed -n 's/.*action="\([^"]*\)".*/\1/p' >${exit_file}
 }
 
 function exit_lab {
@@ -157,11 +157,10 @@ function exit_lab {
 
 	exit_url=$(cat "$exit_file")
 	exit_lab_result=$(wget --load-cookies ${cookies_file} \
-						   --keep-session-cookies \
-						   --save-cookies ${cookies_file} \
-						   --post-data "_token=${token}&_method=PUT" \
-						   -O - "$exit_url" 2> /dev/null)
-	echo "$enter_lab_result" > bubu
+		--keep-session-cookies \
+		--save-cookies ${cookies_file} \
+		--post-data "_token=${token}&_method=PUT" \
+		-O - "$exit_url" 2>/dev/null)
 	if ! [[ -z $(echo "$exit_lab_result" | grep "OK") ]]; then
 		echo "Successfully exited"
 	else
@@ -189,7 +188,7 @@ function lab_in {
 		exit $error
 	fi
 
-	# Find lab 
+	# Find lab
 
 	lab_id=$(find_lab "$token" "$lab")
 	error=$?
@@ -234,8 +233,6 @@ function lab_out {
 	fi
 }
 
-
-
 # Check for existing configuration
 configured=false
 configuring=false
@@ -249,40 +246,40 @@ else
 fi
 
 # Check configuration
-if  [[ ! -z $config_name ]] && [[ ! -z $config_lab ]]; then
+if [[ ! -z $config_name ]] && [[ ! -z $config_lab ]]; then
 	configured=true
 fi
 
 # Process general configuration
 while getopts ":n:l:t:prhc" opt; do
-  case ${opt} in
-    n )
+	case ${opt} in
+	n)
 		configuring=true
 		config_name=$OPTARG
 		echo "Saving name $config_name"
-      ;;
-    l )
+		;;
+	l)
 		configuring=true
 		config_lab=$OPTARG
 		echo "Saving lab $config_lab"
-      ;;
-	t )
+		;;
+	t)
 		configuring=false
 		event_time=$OPTARG
 		;;
-	p )
+	p)
 		configuring=true
 		echo "WARNING: saving password unencrypted"
 		echo -n "Enter DEI account password: "
 		read -s config_psw
 		echo
 		;;
-	r )
+	r)
 		configuring=true
 		config_psw=
 		echo "Password reset"
 		;;
-    c )
+	c)
 		configuring=true
 		echo "Configuration settings:"
 		echo "  Name: $config_name"
@@ -298,16 +295,15 @@ while getopts ":n:l:t:prhc" opt; do
 			echo "Configuration incomplete"
 		fi
 		;;
-    \?|h )
+	\? | h)
 		usage
-      ;;
-  esac
+		;;
+	esac
 done
 
-save_config "$config_name" "$config_lab" "$config_psw" 
+save_config "$config_name" "$config_lab" "$config_psw"
 
-
-shift $((OPTIND -1))
+shift $((OPTIND - 1))
 
 if $configuring; then
 	exit
@@ -323,18 +319,17 @@ if [ -z "$config_psw" ]; then
 	read -s config_psw
 fi
 
-
 case $arg in
-	in)
-		lab_in "$config_name" "$config_psw" "$config_lab"
-		exit $?
-		;;
-	out)
-		lab_out "$config_name" "$config_psw" "$config_lab"
-		exit $?
-		;;
-	*)
-		echo "Invalid argument $arg"
-		usage
-		;;
+in)
+	lab_in "$config_name" "$config_psw" "$config_lab"
+	exit $?
+	;;
+out)
+	lab_out "$config_name" "$config_psw" "$config_lab"
+	exit $?
+	;;
+*)
+	echo "Invalid argument $arg"
+	usage
+	;;
 esac
